@@ -11,7 +11,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
@@ -25,6 +25,17 @@
       <div class="vignette" aria-hidden="true"></div>
 
       <p class="eyebrow">Launching Soon</p>
+
+      <button
+        class="watch-trigger"
+        type="button"
+        id="reviewsTrigger"
+        aria-haspopup="dialog"
+        aria-controls="reviewsModal"
+      >
+        <span class="watch-trigger__icon" aria-hidden="true"></span>
+        <span>Watch This</span>
+      </button>
 
       <img
         class="brand"
@@ -94,6 +105,68 @@
       </div>
     </div>
 
+    <div class="reviews-modal" id="reviewsModal" aria-hidden="true">
+      <div class="reviews-modal__backdrop" data-close></div>
+      <div
+        class="reviews-modal__panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Client Reviews"
+      >
+        <div class="reviews-modal__header">
+          <div>
+            <p class="reviews-modal__eyebrow">MOVE</p>
+            <p class="reviews-modal__title">Client Reviews</p>
+          </div>
+          <button
+            class="reviews-modal__close"
+            type="button"
+            data-close
+            aria-label="Close"
+          >
+            &times;
+          </button>
+        </div>
+        <div class="reviews-modal__body">
+          <button
+            class="reviews-modal__nav reviews-modal__nav--prev"
+            type="button"
+            data-prev
+            aria-label="Previous review"
+          >
+            &#8249;
+          </button>
+          <div class="reviews-modal__stage">
+            <video
+              class="reviews-modal__video"
+              playsinline
+              preload="metadata"
+              controls
+            ></video>
+            <button
+              class="reviews-modal__play"
+              type="button"
+              data-play
+              aria-label="Play review video"
+            >
+              <span class="reviews-modal__play-icon" aria-hidden="true"></span>
+            </button>
+          </div>
+          <button
+            class="reviews-modal__nav reviews-modal__nav--next"
+            type="button"
+            data-next
+            aria-label="Next review"
+          >
+            &#8250;
+          </button>
+        </div>
+        <div class="reviews-modal__footer">
+          <span data-counter></span>
+        </div>
+      </div>
+    </div>
+
     <script>
       const waitlistLink = document.getElementById("waitlist");
       const modal = document.getElementById("waitlistModal");
@@ -137,6 +210,83 @@
       document.addEventListener("keydown", (event) => {
         if (event.key === "Escape" && modal.getAttribute("data-open") === "true") {
           closeWaitlistModal();
+        }
+      });
+
+      const reviewVideos = ["public/reviews/client-reviews-01.mp4"];
+
+      const reviewsTrigger = document.getElementById("reviewsTrigger");
+      const reviewsModal = document.getElementById("reviewsModal");
+      const reviewsVideo = reviewsModal.querySelector(".reviews-modal__video");
+      const reviewsPlayBtn = reviewsModal.querySelector("[data-play]");
+      const reviewsPrevBtn = reviewsModal.querySelector("[data-prev]");
+      const reviewsNextBtn = reviewsModal.querySelector("[data-next]");
+      const reviewsCounter = reviewsModal.querySelector("[data-counter]");
+      let reviewsIndex = 0;
+      let reviewsLastFocused = null;
+
+      function loadReview(index) {
+        reviewsVideo.pause();
+        reviewsIndex = index;
+        reviewsVideo.src = reviewVideos[reviewsIndex];
+        reviewsVideo.load();
+        reviewsPlayBtn.classList.remove("is-hidden");
+        reviewsCounter.textContent = `${reviewsIndex + 1} / ${reviewVideos.length}`;
+        reviewsPrevBtn.disabled = reviewsIndex === 0;
+        reviewsNextBtn.disabled = reviewsIndex === reviewVideos.length - 1;
+      }
+
+      function openReviewsModal() {
+        reviewsLastFocused = document.activeElement;
+        loadReview(0);
+        reviewsModal.setAttribute("data-open", "true");
+        reviewsModal.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+        reviewsModal.querySelector(".reviews-modal__close").focus();
+      }
+
+      function closeReviewsModal() {
+        reviewsVideo.pause();
+        reviewsModal.setAttribute("data-open", "false");
+        reviewsModal.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+        if (reviewsLastFocused) reviewsLastFocused.focus();
+      }
+
+      reviewsTrigger.addEventListener("click", openReviewsModal);
+
+      for (const el of reviewsModal.querySelectorAll("[data-close]")) {
+        el.addEventListener("click", closeReviewsModal);
+      }
+
+      reviewsPlayBtn.addEventListener("click", () => {
+        reviewsVideo.play();
+      });
+      reviewsVideo.addEventListener("play", () => {
+        reviewsPlayBtn.classList.add("is-hidden");
+      });
+      reviewsVideo.addEventListener("pause", () => {
+        reviewsPlayBtn.classList.remove("is-hidden");
+      });
+      reviewsVideo.addEventListener("ended", () => {
+        reviewsPlayBtn.classList.remove("is-hidden");
+      });
+
+      reviewsPrevBtn.addEventListener("click", () => {
+        if (reviewsIndex > 0) loadReview(reviewsIndex - 1);
+      });
+      reviewsNextBtn.addEventListener("click", () => {
+        if (reviewsIndex < reviewVideos.length - 1) loadReview(reviewsIndex + 1);
+      });
+
+      if (reviewVideos.length <= 1) {
+        reviewsPrevBtn.style.display = "none";
+        reviewsNextBtn.style.display = "none";
+      }
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && reviewsModal.getAttribute("data-open") === "true") {
+          closeReviewsModal();
         }
       });
     </script>
